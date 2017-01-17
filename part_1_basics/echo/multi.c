@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
+#include <pthread.h>
 
 #include "read_write.h"
 
@@ -30,14 +30,16 @@
 #define MAX_LINE (79)
 #define ECHO_PORT (3000)
 
+void* handle_socket(void* arg);
+
 int main(int argc, char *argv[]) {
     int list_s;
     int conn_s;
     short int port;
     struct sockaddr_in servaddr;
-    char buffer[MAX_LINE];
     char *endptr;
-    int bye;
+    pthread_t thrd;
+    int *args;
 
     if (argc >= 2) {
         port = strtol(argv[1], &endptr, 0);
@@ -76,23 +78,38 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "error calling accept()\n");
             exit(1);
         }
+        args = malloc(sizeof(int));
+        memcpy(args, &conn_s, sizeof(int));
+        pthread_create(&thrd, NULL, &handle_socket, args);
 
-        bye = 0;
-
-        // read from socket and echo back until client says 'bye'
-        while(!bye) {
-            read_line_from_socket(conn_s, buffer, MAX_LINE - 1);
-            printf("%s", buffer);
-            if (!strncmp(buffer, "bye\n", MAX_LINE - 1)) {
-                printf("client said bye\n");
-                bye = 1;
-            }
-            write_line_to_socket(conn_s, buffer, strlen(buffer));
-        }
-
-        if (close(conn_s) < 0) {
-            fprintf(stderr, "error calling close()\n");
-            exit(1);
-        }
     }
+}
+
+void* handle_socket(void* arg) {
+    int conn_s;
+    char buffer[MAX_LINE];
+    int bye;
+
+    conn_s = *(int*)arg;
+
+    bye = 0;
+
+    // read from socket and echo back until client says 'bye'
+    while (!bye) {
+        read_line_from_socket(conn_s, buffer, MAX_LINE - 1);
+        printf("%s", buffer);
+        if (!strncmp(buffer, "bye\n", MAX_LINE - 1)) {
+            printf("client said bye\n");
+            bye = 1;
+        }
+        write_line_to_socket(conn_s, buffer, strlen(buffer));
+    }
+
+    if (close(conn_s) < 0) {
+        fprintf(stderr, "error calling close()\n");
+        free(arg);
+        return NULL;
+    }
+    free(arg);
+    return NULL;
 }
