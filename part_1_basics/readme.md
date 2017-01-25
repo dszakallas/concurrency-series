@@ -108,7 +108,7 @@ These require the operating system kernel to run tasks in an interleaved manner,
 referred to as *multi-tasking*. This multi-tasking is achieved by scheduling
 processes and threads.
 
-[dataflow]:(assets/ex1_dd.png)
+[dataflow]: assets/ex1_dd.png
 
 ### Processes and threads
 
@@ -263,7 +263,7 @@ easier.
 If you want to know more about the details of different I/O models, read
 [this detailed article](io)!
 
-[io]:https://www.ibm.com/developerworks/linux/library/l-async/index.html
+[io]: https://www.ibm.com/developerworks/linux/library/l-async/index.html
 
 ### Busy-waiting, polling and the event loop
 
@@ -427,10 +427,10 @@ created in one function often has to be available somewhere in it's continuation
 requires manual memory management. I advise you against using libuv directly,
 unless you are well acquainted in C programming.
 
-[ex-single]:echo/single.c
-[ex-multi]:echo/multi.c
-[ex-libuv]:echo/single-uv.c
-[libuv]:https://github.com/libuv/libuv
+[ex-single]: echo/single.c
+[ex-multi]: echo/multi.c
+[ex-libuv]: echo/single-uv.c
+[libuv]: https://github.com/libuv/libuv
 
 ### Next on...
 
