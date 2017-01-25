@@ -144,7 +144,9 @@ style="max-width: 400px; margin: auto; display: block;"> </img>
 Most desktop and server operating system kernels use preemptive schedulers, as
 does the Linux, macOS and Windows kernel. We can assume that threads are
 preemptively scheduled, distinguishing them from their non-preemptive
-(cooperative) counterparts, called *fibers*.
+(cooperative) counterparts, called *fibers*. This preemptive scheduling is the
+reason that a hanging process doesn't stall the whole computer. The hanging time slices are interleaved with other processes' and the OS' code, so the
+system as a whole remains responsive.
 
 > **preemption** is the act of temporarily interrupting a task being carried out
 by a computer system, without requiring its cooperation, and with the intention
@@ -188,7 +190,7 @@ system call, which means that they are unaffected by the above adverse effect.
 
 ### I/O flavors: Blocking vs. non-blocking, sync vs. async
 
-Doing I/O consist of two steps:
+Doing I/O usually consists of two distinct steps:
 
 1. **checking the device**:
  - **blocking**: waiting for the device to be ready, or
@@ -327,10 +329,11 @@ while (pending_events_size) {
     sleep(wait_ms);
   }
 }
+```
 
 We will see a more practical explanation later, when we discuss the reactor and
 proactor concurrency patterns.
-```
+
 
 ### TCP server example
 
@@ -341,7 +344,7 @@ back to the socket until the client writes `"bye"`.
 
 #### Single threaded
 
-The [first version](ex1) uses the standard POSIX procedures of `sys/socket.h`.
+The [first version](ex-single) uses the standard POSIX procedures of `sys/socket.h`.
 The server is single-threaded, it waits until a client connects
 
 ```c
