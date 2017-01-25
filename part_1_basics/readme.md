@@ -308,8 +308,8 @@ pending_event_t *pendings;
 completed_event_t *completeds;
 struct timespec start, end;
 size_t completed_ev_size, pending_ev_size, i;
-long loop_quantum_ms;
-long wait_ms;
+long loop_quantum_us;
+long wait_us;
 
 // do while we have pending events that are not yet completed
 while (pending_events_size) {
@@ -324,9 +324,9 @@ while (pending_events_size) {
   }
   // sleep for a while to avoid busy waiting
   clock_gettime(CLOCK_MONOTONIC, &end);
-  wait_ms = (end.tv_sec - start.tv_sec) * 1e6 + (end.tv_nsec - start.tv_nsec) / 1e3 - loop_quantum_ms;
-  if (wait_ms > 0) {
-    sleep(wait_ms);
+  wait_us = (end.tv_sec - start.tv_sec) * 1e6 + (end.tv_nsec - start.tv_nsec) / 1e3 - loop_quantum_us;
+  if (wait_us > 0) {
+    usleep(wait_us * 1e3);
   }
 }
 ```
