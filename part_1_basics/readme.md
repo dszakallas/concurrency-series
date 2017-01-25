@@ -9,7 +9,7 @@ we are diverting from our usual articles targeting solely Node.js.
 Concurrent code has the bad reputation of being notoriously easy to screw up.
 One of the world's most infamous software disasters was caused by a race
 condition. A programmer error in the Therac-25 radiation therapy device resulted
-in the [death of four people](therac-25). Data races are not the only problem
+in the [death of four people][therac-25]. Data races are not the only problem
 though: inefficient locking, starvation, and a myriad of other problems rise up.
 I remember from university that even the seemingly trivial, innocent-looking
 task of writing a thread-safe singleton proved to be quite challenging because
@@ -150,13 +150,13 @@ system as a whole remains responsive.
 
 > **preemption** is the act of temporarily interrupting a task being carried out
 by a computer system, without requiring its cooperation, and with the intention
-of resuming the task at a later time - *[Wikipedia](preemption)*
+of resuming the task at a later time - *[Wikipedia][preemption]*
 
 Context switching (switching between threads) is done at frequent intervals by
 the kernel, creating the illusion that our programs are running in parallel,
 whereas in reality they are running concurrently but sequentially in short
 slices. Multi-core processors arrived pretty late to commodity: funny that
-Intel's [first dual-core processor](pentium-d), was released in 2005, while
+Intel's [first dual-core processor][pentium-d] was released in 2005, while
 multi-tasking OSes had already been in wide use for at least 20 years.
 
 [preemption]: https://en.wikipedia.org/wiki/Preemption_(computing)
@@ -261,7 +261,7 @@ is advisible to use cross platform libraries, such as Boost.Asio (C++), Seastar
 easier.
 
 If you want to know more about the details of different I/O models, read
-[this detailed article](io)!
+[this detailed article][io]!
 
 [io]: https://www.ibm.com/developerworks/linux/library/l-async/index.html
 
@@ -344,7 +344,7 @@ back to the socket until the client writes `"bye"`.
 
 #### Single threaded
 
-The [first version](ex-single) uses the standard POSIX procedures of `sys/socket.h`.
+The [first version][ex-single] uses the standard POSIX procedures of `sys/socket.h`.
 The server is single-threaded, it waits until a client connects
 
 ```c
@@ -375,7 +375,7 @@ connection.
 #### Multi-threaded
 
 Introducing concurrency without replacing the synchronous blocking networking
-API calls is done with threads. This is shown in the [second version](ex-multi).
+API calls is done with threads. This is shown in the [second version][ex-multi].
 The only difference between this and the single-threaded version is that here
 we create a thread for each of the connections. A real-life server would use
 thread pools of course.
@@ -392,10 +392,10 @@ This finally enables us to serve multiple clients at the same time. Hurray!
 
 #### Single threaded, concurrent
 
-Another way to create a concurrent server is to use [libuv](libuv). It exposes
+Another way to create a concurrent server is to use [libuv][libuv]. It exposes
 asynchronous non-blocking I/O calls and an event loop. Although by using it, our
 code will be coupled to this library, I still find it better than using obscure,
-platform-dependent APIs. The [implementation](ex-libuv) is still quite complex.
+platform-dependent APIs. The [implementation][ex-libuv] is still quite complex.
 
 Once we initialized our tcp server, we register a listener `handle_socket` for
 incoming connections.
