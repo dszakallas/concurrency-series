@@ -39,7 +39,7 @@ and finally arrive at frameworks.
 
 Let the journey begin!
 
-[therac-25]: (https://hackaday.com/2015/10/26/killed-by-a-machine-the-therac-25/)
+[therac-25]: https://hackaday.com/2015/10/26/killed-by-a-machine-the-therac-25/
 
 ### Contents
   1. [Intro](#intro)
@@ -95,11 +95,12 @@ But here comes the question: if we only only have one processor, why do we even
 bother with writing concurrent applications? The processing time will not get
 shorter, and we add the overhead of scheduling. There are various reasons for
 this.
- - First, we, human beings like to interact with the computer in real time, e.g.
+ - We, human beings like to interact with the computer in real time, e.g.
 as I type this text, I want to see it appearing on the screen immediately, at
 the same time listening to my favourite tracklist, and getting notifications
-about my incoming emails.
- - Second, not all operations are carried out on the computer's CPU. If you want
+about my incoming emails. Just example that you cannot drag a window while the
+movie keeps on playing in it.
+ - Not all operations are carried out on the computer's CPU. If you want
  to write to a HDD for example, a lot of time is spent seeking to the position,
  writing the sectors, etc, and the intermittent time can be spent to do
  something else.
@@ -368,9 +369,11 @@ while (!bye) {
 if (close(conn_s) < 0) { /* exit w err */ }
 ```
 
-This server is **not concurrent** at all, it can handle only one client at a
-time. If another client connects, it has to wait until the preceding one closes
-connection.
+![animation showing the single threaded server](assets/single.gif)
+
+As you can see on the gif, this server is **not concurrent** at all, it can
+handle only one client at a time. If another client connects, it has to wait
+until the preceding one closes connection.
 
 #### Multi-threaded
 
@@ -387,6 +390,8 @@ args = malloc(sizeof(int));
 memcpy(args, &conn_s, sizeof(int));
 pthread_create(&thrd, NULL, &handle_socket, args);
 ```
+
+![animation showing the multi threaded server](assets/multi.gif)
 
 This finally enables us to serve multiple clients at the same time. Hurray!
 
@@ -426,6 +431,8 @@ created in one function often has to be available somewhere in it's continuation
 (a handler created in the function, but asynchronously called later), which
 requires manual memory management. I advise you against using libuv directly,
 unless you are well acquainted in C programming.
+
+![animation showing the single threaded server](assets/uv.gif)
 
 [ex-single]: echo/single.c
 [ex-multi]: echo/multi.c
