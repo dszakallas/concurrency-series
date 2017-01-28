@@ -34,6 +34,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <sys/socket.h>
 #include "uv.h"
 
 #define ECHO_PORT (3000)
@@ -101,6 +102,11 @@ void handle_socket(uv_stream_t *server, int status) {
     int uv_err;
     uv_shutdown_t *shutdown_req;
     uv_tcp_t *client;
+    struct sockaddr_in clientaddr;
+    socklen_t clientaddr_len;
+    int conn_s;
+
+    clientaddr_len = sizeof(struct sockaddr_in);
 
     uv_err = 0;
 
@@ -117,6 +123,13 @@ void handle_socket(uv_stream_t *server, int status) {
         FATAL_UV_ERR(uv_shutdown(shutdown_req, (uv_stream_t *) client, handle_shutdown), "shutdown connection")
     })
 
+    uv_fileno((uv_handle_t *)client, &conn_s);
+
+
+    uv_tcp_getpeername(client, (struct sockaddr*) &clientaddr, (int *)&clientaddr_len);
+
+    printf("%d: accept %s:%hu\n", conn_s, inet_ntoa(clientaddr.sin_addr), clientaddr.sin_port);
+
     /* Start reading data from client */
     ERROR_UV_ERR(uv_read_start((uv_stream_t*) client, handle_alloc, handle_read), "read", {
         shutdown_req = malloc(sizeof(uv_shutdown_t));
@@ -131,10 +144,13 @@ void handle_alloc(uv_handle_t *handle, size_t size, uv_buf_t *buf) {
 }
 
 void handle_read(uv_stream_t* client, ssize_t nread, const uv_buf_t* buf) {
+    int conn_s;
     int uv_err;
     uv_shutdown_t *shutdown_req;
     uv_write_t *write_req;
     struct write_ctx_t *write_ctx;
+
+    uv_fileno((uv_handle_t *)client, &conn_s);
 
     /* Errors or EOF */
     if (nread < 0) {
@@ -158,10 +174,11 @@ void handle_read(uv_stream_t* client, ssize_t nread, const uv_buf_t* buf) {
 
     /* Check if we should shutdown connection which the client signals by sending "bye" */
     if (!strncmp("bye", buf->base, fmin(nread, 3))) {
+        printf("%d: bye\n", conn_s);
         free(buf->base);
         shutdown_req = malloc(sizeof(uv_shutdown_t));
         shutdown_req->data = client;
-        FATAL_UV_ERR(uv_shutdown(shutdown_req, (uv_stream_t *) client, handle_shutdown), "shutdown connection")
+        FATAL_UV_ERR(uv_shutdown(shutdown_req, client, handle_shutdown), "shutdown connection")
         return;
     }
 
@@ -172,6 +189,9 @@ void handle_read(uv_stream_t* client, ssize_t nread, const uv_buf_t* buf) {
     write_ctx->buf = uv_buf_init(buf->base, nread);
 
     write_req->data = write_ctx;
+
+
+    printf("%d: echo %.*s", conn_s, (int)write_ctx->buf.len, write_ctx->buf.base);
 
     ERROR_UV_ERR(uv_write(write_req, client, &write_ctx->buf, 1, handle_write), "write", {
         fprintf(stderr, "error: writing: %s\n", uv_strerror(uv_err));
@@ -207,8 +227,11 @@ void handle_write(uv_write_t *req, int status) {
 
 void handle_shutdown(uv_shutdown_t* req, int status) {
     int uv_err;
+    int conn_s;
     uv_err = 0;
     FATAL_UV_ERR(status, "handle shutdown")
+    uv_fileno((uv_handle_t *)req->handle, &conn_s);
+    printf("%d: close\n", conn_s);
     uv_close((uv_handle_t*) req->handle, handle_close);
     free(req);
 }

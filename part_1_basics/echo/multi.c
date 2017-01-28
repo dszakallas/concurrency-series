@@ -30,16 +30,26 @@
 #define MAX_LINE (79)
 #define ECHO_PORT (3000)
 
-void* handle_socket(void* arg);
+struct handler_args_t {
+    int conn_s;
+    struct sockaddr_in clientaddr;
+};
+
+int handle_socket(int conn_s);
+void* handle_socket_wrapper(void* arg);
 
 int main(int argc, char *argv[]) {
     int list_s;
     int conn_s;
     short int port;
     struct sockaddr_in servaddr;
+    struct sockaddr_in clientaddr;
+    socklen_t clientaddr_len;
     char *endptr;
     pthread_t thrd;
-    int *args;
+    struct handler_args_t *args;
+
+    clientaddr_len = sizeof(struct sockaddr_in);
 
     if (argc >= 2) {
         port = strtol(argv[1], &endptr, 0);
@@ -72,44 +82,50 @@ int main(int argc, char *argv[]) {
     }
 
     while (1) {
-
         /*  Wait for a connection, then accept() it  */
-        if ((conn_s = accept(list_s, NULL, NULL)) < 0) {
+        if ((conn_s = accept(list_s, (struct sockaddr *)&clientaddr, &clientaddr_len)) < 0) {
             fprintf(stderr, "error calling accept()\n");
             exit(1);
         }
-        args = malloc(sizeof(int));
-        memcpy(args, &conn_s, sizeof(int));
-        pthread_create(&thrd, NULL, &handle_socket, args);
-
+        printf("%d: accept %s:%hu\n", conn_s, inet_ntoa(clientaddr.sin_addr), clientaddr.sin_port);
+        args = malloc(sizeof(struct handler_args_t));
+        args->conn_s = conn_s;
+        args->clientaddr = clientaddr;
+        pthread_create(&thrd, NULL, &handle_socket_wrapper, args);
     }
 }
 
-void* handle_socket(void* arg) {
-    int conn_s;
+void* handle_socket_wrapper(void* arg) {
+    struct handler_args_t *handler_args;
+    handler_args = (struct handler_args_t*)arg;
+    if(handle_socket(handler_args->conn_s)) {
+        exit(1);
+    }
+    free(arg);
+    return NULL;
+}
+
+int handle_socket(int conn_s) {
     char buffer[MAX_LINE];
-    int bye;
-
-    conn_s = *(int*)arg;
-
-    bye = 0;
-
     // read from socket and echo back until client says 'bye'
-    while (!bye) {
-        read_line_from_socket(conn_s, buffer, MAX_LINE - 1);
-        printf("%s", buffer);
-        if (!strncmp(buffer, "bye\n", MAX_LINE - 1)) {
-            printf("client said bye\n");
-            bye = 1;
+    while (1) {
+        if(read_line_from_socket(conn_s, buffer, MAX_LINE - 1) > 0) {
+            if (!strncmp(buffer, "bye\n", MAX_LINE - 1)) {
+                printf("%d: bye\n", conn_s);
+                break;
+            }
+            printf("%d: echo %s", conn_s, buffer);
+            write_line_to_socket(conn_s, buffer, strlen(buffer));
+        } else {
+            break;
         }
-        write_line_to_socket(conn_s, buffer, strlen(buffer));
     }
 
     if (close(conn_s) < 0) {
         fprintf(stderr, "error calling close()\n");
-        free(arg);
-        return NULL;
+        return 1;
     }
-    free(arg);
-    return NULL;
+
+    printf("%d: close\n", conn_s);
+    return 0;
 }
