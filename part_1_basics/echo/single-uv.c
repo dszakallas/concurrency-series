@@ -39,7 +39,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 #define ECHO_PORT (3000)
 
-// leaks resources, but how cares? we're gonna shutdown anyways
+// leaks resources, but who cares? we are going to shutdown anyways
 #define FATAL_UV_ERR(op, mess) if((uv_err = (op))) {                \
     fprintf(stderr, "fatal: %s: %s\n", (mess), uv_strerror(uv_err));\
     exit(1);                                                        \
