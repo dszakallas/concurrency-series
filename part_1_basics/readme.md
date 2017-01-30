@@ -106,13 +106,12 @@ this.
  - We, human beings like to interact with the computer in real time, e.g.
 as I type this text, I want to see it appearing on the screen immediately, at
 the same time listening to my favourite tracklist, and getting notifications
-about my incoming emails.
-- The only Just example that you cannot drag a window while the
+about my incoming emails. Just example that you cannot drag a window while the
 movie keeps on playing in it.
  - Not all operations are carried out on the computer's CPU. If you want
- to write to a HDD for example, a lot of time is spent seeking to the position,
- writing the sectors, etc, and the intermittent time can be spent to do
- something else.
+to write to a HDD for example, a lot of time is spent seeking to the position,
+writing the sectors, etc, and the intermittent time can be spent to do
+something else.
 
 These require the operating system kernel to run tasks in an interleaved manner,
 referred to as *multi-tasking*. This multi-tasking is achieved by scheduling
@@ -125,8 +124,7 @@ processes and threads.
 A *process*, quite unsurprisingly, a running instance of a computer program.
 
 
-> It is what you see in the task manager of your operating system or `top`. --
-Captain Obvious
+> It is what you see in the task manager of your operating system or `top`.
 
 A process consists of allocated memory which holds the program code, its data, a
 heap for dynamic memory allocations, and a lot more. However it is not the unit
@@ -155,7 +153,8 @@ Most desktop and server operating system kernels use preemptive schedulers, as
 does the Linux, macOS and Windows kernel. We can assume that threads are
 preemptively scheduled, distinguishing them from their non-preemptive
 (cooperative) counterparts, called *fibers*. This preemptive scheduling is the
-reason that a hanging process doesn't stall the whole computer. The hanging time slices are interleaved with other processes' and the OS' code, so the
+reason that a hanging process doesn't stall the whole computer. The hanging time
+slices are interleaved with other processes' and the OS' code, so the
 system as a whole remains responsive.
 
 > **preemption** is the act of temporarily interrupting a task being carried out
@@ -257,22 +256,42 @@ apartment. This is how it is done with different types of I/O:
 Which model suits you the best depends on your application, the complexity you
 dare to tackle, your OS's support, etc.
 
-Synchronous, blocking I/O has the widest support, long established POSIX
-interfaces and is the most widely understood and easy to use. It's restricting
-in a sense, because you have to rely on thread-based concurrency, which is
-sometimes undesirable. (We will see the drawbacks of the thread model in the
-next article.)
+Synchronous, blocking I/O has wide support with long established POSIX
+interfaces and is the most widely understood and easy to use. Its drawback is
+that you have to rely on thread-based concurrency, which is sometimes
+undesirable:
+  - every thread allocated uses up resources
+  - more and more context switching will happen between them
+  - the OS has a maximum number of threads.
 
-Asynchronous event-driven I/O on the other hand has more optimization
-capabilities exposed to the user-space on the expense of added complexity. It is
-intriguing even for advanced programmers, and is also platform-specific, so it
-is advisible to use cross platform libraries, such as Boost.Asio (C++), Seastar
-(C++), or libuv (C) to hide platform specific details and make programming
-easier.
+That's why modern web servers shifted to the async non-blocking model,
+and advocate using a single-threaded event loop for the network interface to
+[maximize the throughput][mio-reddit]. Because currently the underlying OS APIs
+are platform-specific and quite challenging to use, there are a couple
+of libraries providing an abstraction layer over it:
+
+- [Boost.Asio ][boost-asio] is a C++ library  for network and low-level I/O
+programming that provides developers with a consistent asynchronous model using
+a modern C++ approach.
+- [Seastar][seastar] is an advanced, open-source C++ framework for
+high-performance server applications on modern hardware. It is used by the
+[ScyllaDB][scylladb] project.
+- [mio (Rust)][mio] is a lightweight IO library for Rust with a focus on adding
+as little overhead as possible over the OS abstractions. (Yep, it's definitely
+true here. It is so lightweight it doesn't future an event loop model anymore).
+[libuv (C)][libuv] is a multi-platform support library with a focus on
+asynchronous I/O. It is used by Node.js.
 
 If you want to know more about the details of different I/O models, read
 [this detailed article][io]!
 
+[boost-asio]: http://www.boost.org/doc/libs/1_62_0/doc/html/boost_asio.html
+[seastar]: http://www.seastar-project.org/
+[mio]: https://docs.rs/mio/0.6.4/mio/
+[libuv]: https://github.com/libuv/libuv
+[mio-reddit]: https://www.reddit.com/r/rust/comments/4q3ll0/rust_mio_multithreaded_tcp_server_examples_needed/
+
+[scylladb]: http://www.scylladb.com/
 [io]: https://www.ibm.com/developerworks/linux/library/l-async/index.html
 
 ### Busy-waiting, polling and the event loop
@@ -280,7 +299,6 @@ If you want to know more about the details of different I/O models, read
 Busy-waiting is the act of repeatedly checking a resource, such as I/O for
 availability in a *tight loop*. The absence of the tight loop is what
 distinguishes *polling* from busy-waiting. It's better shown than said:
-
 
 ```c
 // tight-loop example
@@ -308,7 +326,7 @@ the mutex becomes free. This means that `do_stuff` is blocked.
 
 Let's say we have more of these mutexes or any arbitrary I/O device that can be
 polled. We can invert control-flow by assigning handlers to be called when the
-resource is ready. If we periodically check the resources in the loop, and
+resource is ready. If we periodically check the resources in the loop and
 execute the associated handlers on completion, we created what is called an
 *event loop*.
 
@@ -341,9 +359,14 @@ while (pending_events_size) {
 }
 ```
 
-We will see a more practical explanation later, when we discuss the reactor and
-proactor concurrency patterns.
+This kind of control inversion takes some time getting used to. Different
+frameworks expose various levels of abstractions over it. As we already
+hinted, with *mio* you only get the API for polling events, it delegates
+writing the looping mechanism to the programmer. Libuv has an event loop
+and a callback based API for handles, while [rotor][rotor] requires you to
+write a state machine instead.
 
+[rotor]: https://github.com/tailhook/rotor
 
 ### TCP server example
 
@@ -354,8 +377,8 @@ back to the socket until the client writes `"bye"`.
 
 #### Single threaded
 
-The [first version][ex-single] uses the standard POSIX procedures of `sys/socket.h`.
-The server is single-threaded, it waits until a client connects
+The [first version][ex-single] uses the standard POSIX procedures of
+`sys/socket.h`. The server is single-threaded, it waits until a client connects
 
 ```c
 /*  Wait for a connection, then accept() it  */
