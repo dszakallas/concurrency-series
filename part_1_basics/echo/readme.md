@@ -1,3 +1,4 @@
+# On your machine
 
 Generate build files and build:
 ```
@@ -16,15 +17,17 @@ Run server and listen on port 4000
 Connect with
 
 ```
-nc localhost 4000
+nc localhost <PORT>
 ```
-
-or 
-
-```
-nc <CONTAINER IP> 4000
-```
-
-if running in Docker.
 
 To close connection just say `bye`!
+
+# Docker
+
+You can all above examples on Docker if you have Windows or don't fancy
+installing the deps.
+
+```
+docker build -t concurrency/echo .
+docker run concurrency/echo # ./index.sh help
+```

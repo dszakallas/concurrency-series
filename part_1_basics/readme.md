@@ -1,4 +1,4 @@
-# Concurrency & Parallelism: Basics
+# Concurrency & Parallelism: I/O
 
 With this article we are starting a series of blogposts targeting developers who
 want to learn or refresh their knowledge about writing concurrent applications
@@ -81,24 +81,33 @@ multiple alternatives for running it sequentially. Showing only two of them:
 
 Alternatively these tasks can run in parallel, e.g. on another processor
 core, another processor, or a completely separate computer. On these
-diagrams, thread actually means a physically separated core, not to be confused
-with OS threads. that are not necessarily parallel.
+diagrams, thread actually means a computation carried out on dedicated processor
+core, not an OS thread, as they are not necessarily parallel. How else could
+you run a multithreaded webserver with dedicated threads for hundreds of
+connections?
+
 
 <img style="max-width: 800px; margin: auto; display: block;" alt="13245" src="assets/ex1_mt.png"></img>
 
-These are very simplistic illustrations, but at least show that running
-concurrent tasks in parallel can reduce the overall computation time. The
-results will remain correct as long as the partial order shown on the above
-data flow graph is correct.
+It's not rocket science, but what I wanted to show on these diagrams is that
+running concurrent tasks in parallel can reduce the overall computation time.
+The results will remain correct as long as the partial order shown on the above
+data flow graph is correct. However running if we only have one thread, the
+different orders are apparently equivalent, at least regarding the overall time.
 
-But here comes the question: if we only only have one processor, why do we even
-bother with writing concurrent applications? The processing time will not get
-shorter, and we add the overhead of scheduling. There are various reasons for
+If we only only have one processor, why do we even bother with writing
+concurrent applications? The processing time will not get shorter, and we add
+the overhead of scheduling. As a matter of fact, any modern operating system
+will also slice up the concurrent tasks and interleave them so each of the slices
+will run for a short time.
+
+There are various reasons for
 this.
  - We, human beings like to interact with the computer in real time, e.g.
 as I type this text, I want to see it appearing on the screen immediately, at
 the same time listening to my favourite tracklist, and getting notifications
-about my incoming emails. Just example that you cannot drag a window while the
+about my incoming emails.
+- The only Just example that you cannot drag a window while the
 movie keeps on playing in it.
  - Not all operations are carried out on the computer's CPU. If you want
  to write to a HDD for example, a lot of time is spent seeking to the position,
