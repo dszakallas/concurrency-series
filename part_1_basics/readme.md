@@ -19,8 +19,8 @@ No wonder that throughout the decades many concurrency-related patterns emerged
 to abstract away the complexity and snip the possibilities of errors. Some have
 arisen as a straightforward consequence of the properties of an application
 area, like event loops and dispatchers in window managers, GUI toolkits and
-browsers; where others succeeded in creating more holistic, or say general
-approaches applicable to a wide array of use cases, like Erlang's actor system.
+browsers; where others succeeded in creating more general approaches applicable
+to a wide array of use cases, like Erlang's actor system.
 
 For example, in my experience after a brief learning period, most developers are
 able to write highly concurrent, good quality code in Node.js, which is also
