@@ -111,11 +111,12 @@ movie keeps on playing in it.
  - Not all operations are carried out on the computer's CPU. If you want
 to write to a HDD for example, a lot of time is spent seeking to the position,
 writing the sectors, etc, and the intermittent time can be spent to do
-something else.
+something else. The same applies to virtually ever I/O, even computations
+carried out on the GPU.
 
 These require the operating system kernel to run tasks in an interleaved manner,
-referred to as *multi-tasking*. This multi-tasking is achieved by scheduling
-processes and threads.
+referred to as *time-sharing*. This is a very important property of modern
+operating systems. Let's see the basics of this.
 
 [dataflow]: assets/ex1_dd.png
 
@@ -268,31 +269,15 @@ That's why modern web servers shifted to the async non-blocking model,
 and advocate using a single-threaded event loop for the network interface to
 [maximize the throughput][mio-reddit]. Because currently the underlying OS APIs
 are platform-specific and quite challenging to use, there are a couple
-of libraries providing an abstraction layer over it:
-
-- [Boost.Asio ][boost-asio] is a C++ library  for network and low-level I/O
-programming that provides developers with a consistent asynchronous model using
-a modern C++ approach.
-- [Seastar][seastar] is an advanced, open-source C++ framework for
-high-performance server applications on modern hardware. It is used by the
-[ScyllaDB][scylladb] project.
-- [mio (Rust)][mio] is a lightweight IO library for Rust with a focus on adding
-as little overhead as possible over the OS abstractions. (Yep, it's definitely
-true here. It is so lightweight it doesn't future an event loop model anymore).
-[libuv (C)][libuv] is a multi-platform support library with a focus on
-asynchronous I/O. It is used by Node.js.
+of libraries providing an abstraction layer over it. The [appendix] list some of
+them.
 
 If you want to know more about the details of different I/O models, read
 [this detailed article][io]!
 
-[boost-asio]: http://www.boost.org/doc/libs/1_62_0/doc/html/boost_asio.html
-[seastar]: http://www.seastar-project.org/
-[mio]: https://docs.rs/mio/0.6.4/mio/
-[libuv]: https://github.com/libuv/libuv
-[mio-reddit]: https://www.reddit.com/r/rust/comments/4q3ll0/rust_mio_multithreaded_tcp_server_examples_needed/
 
-[scylladb]: http://www.scylladb.com/
 [io]: https://www.ibm.com/developerworks/linux/library/l-async/index.html
+
 
 ### Busy-waiting, polling and the event loop
 
@@ -360,13 +345,9 @@ while (pending_events_size) {
 ```
 
 This kind of control inversion takes some time getting used to. Different
-frameworks expose various levels of abstractions over it. As we already
-hinted, with *mio* you only get the API for polling events, it delegates
-writing the looping mechanism to the programmer. Libuv has an event loop
-and a callback based API for handles, while [rotor][rotor] requires you to
-write a state machine instead.
-
-[rotor]: https://github.com/tailhook/rotor
+frameworks expose various levels of abstractions over it. Some only provide an
+API for polling events, while others use a more opinionated mechanism like an
+event loop or a state machine.
 
 ### TCP server example
 
@@ -478,3 +459,32 @@ your time to play with the examples. In the next chapter, we continue with some
 good ol' concurrency patterns and new ones as well. We will see how to use
 futures and promises for threads and continuations and will also talk about the
 reactor and proactor design patterns.
+
+### Appendix
+
+List of libraries providing async I/O
+
+| Name                     | Language | Description                                                                                                                                                                | License                |
+|--------------------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------|
+| [Boost.Asio][boost-asio] | C++      | network and low-level I/O.                                                                                                                                                 | Boost Software License |
+| [Seastar][seastar]       | C++      | network and filesystem I/O, multi-core support, fibers. Used by the [ScyllaDB][scylladb] project.                                                                          | APL 2.0                |
+| [libuv][libuv]           | C        | network and filesystem I/O, threading and synchronization primitives. Used by Node.js.                                                                                     | MIT                    |
+| [Netty][netty]           | Java     | network I/O. Used by [Play Framework][play], [Finagle][finagle], [Vert.x][vertx] high-level networking libraries and [lot of other projects][netty-proj], like databases.  | APL 2.0                |
+| [mio]                    | Rust     | network I/O. It is used the high-level [tokio] and [rotor] networking libraries.                                                                                           | MIT                    |
+| [Twisted][twisted]       | Python   | network I/O                                                                                                                                                                | MIT                    |
+
+[boost-asio]: http://www.boost.org/doc/libs/1_62_0/doc/html/boost_asio.html
+[seastar]: http://www.seastar-project.org/
+[mio]: https://docs.rs/mio/0.6.4/mio/
+[libuv]: https://github.com/libuv/libuv
+[mio-reddit]: https://www.reddit.com/r/rust/comments/4q3ll0/rust_mio_multithreaded_tcp_server_examples_needed/
+
+[scylladb]: http://www.scylladb.com/
+[tokio]: https://github.com/tokio-rs/tokio-core
+[rotor]: https://github.com/tailhook/rotor
+[netty]: http://netty.io/
+[play]: https://playframework.com/
+[finagle]: https://twitter.github.io/finagle/
+[vertx]: http://vertx.io/
+[netty-proj]: http://netty.io/wiki/adopters.html
+[twisted]: https://twistedmatrix.com/trac/
